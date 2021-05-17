@@ -17,8 +17,7 @@ else:
     device = torch.device('cuda:0')
     print('Device: {}'.format(torch.cuda.get_device_name(device.index)))
 
-#%%
-pad_readout = 5 # Number of pixels to pad the readout dimension with (could be determined based on bandwidth)
+#%% MESS fitting options
 n_runs = 10 # Number of pseudo-replicates
 
 options = {'lambda_b': 0.1, # Smoothness of b-parameter
@@ -29,17 +28,15 @@ options = {'lambda_b': 0.1, # Smoothness of b-parameter
            'iterations1': 200, # Number of iterations for first phase of optimization (real-valued, establish b-parameters)
            'iterations2': 200} # Number of iterations for second phase of optimization (complex-valued, b-parameters fixed)
 
-# TODO: Voxel size
-
-#%%
+#%% Loop over subjects
 for P in [1,2,3,4,5]:
-    print(P)
-    filename = f'./data/P{P}.h5'
+    print(f'P{P}:')
     
+    filename = f'./data/P{P}.h5'
     dirName = f'./results/mess_P{P}/'
     os.makedirs(dirName, exist_ok=True)
 
-    #%%
+    # Loop over pseudo-replicates (plus one run without additional noise)
     for run in range(n_runs+1):
         # Load image
         with h5py.File(filename, 'r') as f:
@@ -72,7 +69,7 @@ for P in [1,2,3,4,5]:
         # Fit parameters to MESS image
         r = fit_mess(img, te, te_t2, tr, fa, bw, B0, options, polarity=[1,-1,-1,1], readout_dir=1, device=device)
     
-        #%% Write results to nifti
+        # Write results to nifti
         # TODO: Use voxel size
         def save(img, filename):
             M = [[0,0,-0.65,0],
@@ -88,4 +85,3 @@ for P in [1,2,3,4,5]:
         save(r['w'] * np.exp(1j * r['b_plus']), dirName + f'w_run{run}.nii.gz')
         save(r['f'] * np.exp(1j * r['b_plus']), dirName + f'f_run{run}.nii.gz')
         save(r['r2'], dirName + f'r2_run{run}.nii.gz')
-

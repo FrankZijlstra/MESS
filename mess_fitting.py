@@ -53,7 +53,7 @@ def fit_mess(img, te, te_t2, tr, fa, bw, B0, options, polarity=[1,-1,-1,1], read
 
     #%% Linear phase correction
     img = phasecorrection_mess(img)
-    print('Time phase correction:', time.time() - t0)
+    print(f'Time phase correction: {time.time() - t0:.1f} seconds')
 
     #%% Pad readout dimension to prevent signal wrapping around because of chemical shift correction
     img = np.pad(img,((0,0),(0,0),(pad_readout,pad_readout),(0,0)))
@@ -88,7 +88,7 @@ def fit_mess(img, te, te_t2, tr, fa, bw, B0, options, polarity=[1,-1,-1,1], read
     # Calculate b_minus based on 3rd and 4th echo (same as b0 in dixon_2point)
     b_minus_init = calculate_b0(img[[3,2]], fat_dixon[[3,2]], b_init.conj())
     
-    print('Time Dixon:', time.time() - t0)
+    print(f'Time Dixon: {time.time() - t0:.1f} seconds')
 
     #%% Calculate noise-amplification factor for kx-regularization parameter (Lu et al)
     na = np.zeros(fat_kspace.shape[1])
@@ -207,16 +207,15 @@ def fit_mess(img, te, te_t2, tr, fa, bw, B0, options, polarity=[1,-1,-1,1], read
         slices_per_chunk = (gpu_ram - ram_intercept) // (ram_slope * img.shape[2] * img.shape[3])
         chunks = math.ceil(img.shape[1] / slices_per_chunk)
     else:
-        chunks = 10 #img.shape[1]
+        chunks = img.shape[1]
         
     x = math.ceil(img.shape[1]/chunks)
     t0 = time.time()
     for i in range(chunks):
-        print(i+1,'/',chunks,i*x,min((i+1)*x, img.shape[1]))
+        print(f'Fitting: {i+1}/{chunks} (Slices: {i*x} to {min((i+1)*x, img.shape[1])})')
         r.append(fit(i*x,min((i+1)*x, img.shape[1])))
     
     r = {k:np.concatenate([x[k] for x in r], axis=0) for k in r[0]}
-
-    print('Time fitting:', time.time() - t0)
+    print(f'Time fitting: {time.time() - t0:.1f} seconds')
     
     return r

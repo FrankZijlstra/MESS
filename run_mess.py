@@ -10,18 +10,14 @@ from mess_fitting import fit_mess
 
 #%% pytorch init
 # Select GPU if available, otherwise fall back to CPU computation (much slower!)
-# if not torch.cuda.is_available():
-#     device = torch.device('cpu')
-#     print('Device: CPU')
-# else:
-#     device = torch.device('cuda:0')
-#     print('Device: {}'.format(torch.cuda.get_device_name(device.index)))
+if not torch.cuda.is_available():
+    device = torch.device('cpu')
+    print('Device: CPU')
+else:
+    device = torch.device('cuda:0')
+    print('Device: {}'.format(torch.cuda.get_device_name(device.index)))
 
-device = torch.device('cpu')
-
-#%%
-pad_readout = 5 # Number of pixels to pad the readout dimension with (could be determined based on bandwidth)
-
+#%% MESS fitting options
 options = {'lambda_b': 0.1, # Smoothness of b-parameter
            'na_threshold': 3, # Noise amplification threshold to enable kx regularization
            'lambda_k': 0.05, # Regularization of kx frequencies
@@ -30,17 +26,14 @@ options = {'lambda_b': 0.1, # Smoothness of b-parameter
            'iterations1': 200, # Number of iterations for first phase of optimization (real-valued, establish b-parameters)
            'iterations2': 200} # Number of iterations for second phase of optimization (complex-valued, b-parameters fixed)
 
-# TODO: Voxel size, readout dimension (and direction?)
-
-#%%
+#%% Loop over subjects
 for P in [1]:
-    print(P)
-    filename = f'./data/P{P}.h5'
-    
+    print(f'P{P}:')
+
+    filename = f'./data/P{P}.h5'   
     dirName = f'./results/mess_P{P}/'
     os.makedirs(dirName, exist_ok=True)
 
-    #%%
     # Load image
     with h5py.File(filename, 'r') as f:
         img = np.array(f['mess'])
@@ -66,7 +59,7 @@ for P in [1]:
     # Fit parameters to MESS image
     r = fit_mess(img, te, te_t2, tr, fa, bw, B0, options, polarity=[1,-1,-1,1], readout_dir=1, device=device)
 
-    #%% Write results to nifti
+    # Write results to nifti
     # TODO: Use voxel size
     def save(img, filename):
         M = [[0,0,-0.65,0],
