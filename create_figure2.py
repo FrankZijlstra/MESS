@@ -8,7 +8,7 @@ def load(filename):
     return np.array(nib.load(filename).dataobj).transpose(2,1,0)
 
 
-dirname = './results/mess_visualization_P1/'
+dirname = './results/mess_P1/'
 S = 126 # Slice to visualize
 image_dir = './images/figure2/'
 
